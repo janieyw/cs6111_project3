@@ -30,7 +30,7 @@ def load_baskets(filename='baskets.pkl'):
 def apriori_gen(Lk_minus_1, k):
     """Generate Ck from Lk-1."""
     Ck = []
-    
+
     # Join step
     for i in range(len(Lk_minus_1)):
         for j in range(i + 1, len(Lk_minus_1)):
@@ -56,24 +56,56 @@ def apriori(baskets, min_sup):
             item_counts[item] = item_counts.get(item, 0) + 1
 
     # Generate L1 from single item counts
-    L1 = [frozenset([item]) for item, count in item_counts.items() if count / total_baskets >= min_sup]
-    L = [L1] if L1 else []
+    L1 = [(frozenset([item]), count / total_baskets) for item, count in item_counts.items() if count / total_baskets >= min_sup]
+    L = [[], L1]
     k = 2
 
-    while L and k-2 < len(L):
-        Ck = apriori_gen(L[k-2], k)
+    while L[-1]:
+        Ck = apriori_gen([x[0] for x in L[k-1]], k)
         item_counts = {itemset: 0 for itemset in Ck}
         for basket in baskets:
             for itemset in Ck:
                 if itemset.issubset(basket):
                     item_counts[itemset] += 1
         
-        Lk = [itemset for itemset, count in item_counts.items() if count / total_baskets >= min_sup]
-        if Lk:
-            L.append(Lk)
+        Lk = [(itemset, count / total_baskets) for itemset, count in item_counts.items() if count / total_baskets >= min_sup]
+        L.append(Lk)
         k += 1
-    return [item for sublist in L for item in sublist]  
+    return sorted(sum(L, []), key=lambda x: x[1], reverse=True)
 
+def get_all_subsets(items):
+    items = list(items)
+    current = set()
+    subsets = []
+    def _recur(i, current):
+        if i == len(items):
+            if current:
+                subsets.append(list(current))
+            return
+        _recur(i+1, current)
+        current.add(items[i])
+        _recur(i+1, current)
+        current.remove(items[i])
+    _recur(0, current)
+    return subsets
+
+def get_association_rules(frequent_itemsets, min_conf):
+    # output format: [(lhs, rhs, conf, support)]
+    sup_map = {frozenset(x[0]): x[1] for x in frequent_itemsets}
+    rules = []
+    checked_rels = set() # set((lhs, rhs))
+    for itemset, sup in frequent_itemsets:
+        if len(itemset) < 2:
+            continue
+        for rhs in itemset:
+            for lhs in get_all_subsets(itemset - set([rhs])):
+                if (frozenset(lhs), rhs) in checked_rels:
+                    continue
+                conf = sup_map[frozenset([rhs] + lhs)] / sup_map[frozenset(lhs)]
+                if conf >= min_conf:
+                    rules.append((lhs, rhs, conf, sup_map[frozenset([rhs] + lhs)]))
+                checked_rels.add((frozenset(lhs), rhs))
+    return sorted(rules, key=lambda x: x[2], reverse=True)
 
 def main():
     if len(sys.argv) != 4:
@@ -85,7 +117,7 @@ def main():
         raise ValueError(
             "`min_support` must be a positive number in the range of `(0, 1]`. "
         )
-    encoded_df = pd.read_csv("encoded_data.csv")
+    # encoded_df = pd.read_csv("encoded_data.csv")
 
     baskets = load_baskets() # save and load for convenience
     if baskets is None:
@@ -98,6 +130,11 @@ def main():
     print("Frequent Itemsets:")
     for itemset in frequent_itemsets:
         print(itemset)
+
+    association_rules = get_association_rules(frequent_itemsets, min_conf)
+    print("Association rules:")
+    for r in association_rules:
+        print(r)
 
 
 if __name__ == "__main__":
