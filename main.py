@@ -2,12 +2,12 @@ import os
 import sys
 import pickle
 import pandas as pd
-import numpy as np
 
 
 INTERESTED_CATEGORICAL_COLS = ['BORO_NM', 'LAW_CAT_CD', 'OFNS_DESC', 'PATROL_BORO', 'PREM_TYP_DESC', 'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX', 'VIC_AGE_GROUP', 'VIC_RACE', 'VIC_SEX']
 
 def generate_baskets(df, interested_columns):
+    """Create baskets from df"""
     baskets = []
     for i, row in df.iterrows():
         basket = set(f'{col} / {row[col]}' for col in interested_columns if row[col] != 'UNKNOWN')
@@ -16,15 +16,18 @@ def generate_baskets(df, interested_columns):
 
 
 def save_baskets(baskets, filename='baskets.pkl'):
+    """Save the generated baskets to a pickle file, which is purely for convenience in case of multiple generations"""
     with open(filename, 'wb') as f:
         pickle.dump(baskets, f)
 
 
 def load_baskets(filename='baskets.pkl'):
+    """Load baskets from a pickle file if it exists"""
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
             return pickle.load(f)
     return None
+
 
 def apriori_gen(Lk_minus_1, k):
     """Generate Ck from Lk-1."""
@@ -112,6 +115,7 @@ def main():
         return
     file_name, min_sup, min_conf = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
 
+    # Ensure user input validity
     if min_sup <= 0 or min_sup > 1:
         raise ValueError("`min_support` must be a positive number in the range of (0, 1].")
     if min_conf <= 0 or min_conf > 1:
@@ -124,30 +128,24 @@ def main():
         save_baskets(baskets)
     frequent_itemsets = apriori(baskets, min_sup)
     
-    print(f"==Frequent itemsets (min_sup={min_sup * 100}%)")
-    for itemset, support in frequent_itemsets:
-        print(f"{list(itemset)}, {support * 100:.4f}%")
-    
-    association_rules = get_association_rules(frequent_itemsets, min_conf)
-    print(f"==High-confidence association rules (min_conf={min_conf * 100}%)")
-    for lhs, rhs, conf, supp in association_rules:
-        print(f"{lhs} => [{rhs}] (Conf: {conf * 100:.4f}%, Supp: {supp * 100:.4f}%)")
+    # Redirect the standard output to a file
+    original_stdout = sys.stdout
+    with open('output.txt', 'w') as f:
+        sys.stdout = f
 
+        print(f"==Frequent itemsets (min_sup={min_sup * 100}%)")
+        for itemset, support in frequent_itemsets:
+            print(f"{list(itemset)}, {support * 100:.4f}%")
+        
+        association_rules = get_association_rules(frequent_itemsets, min_conf)
+        print(f"==High-confidence association rules (min_conf={min_conf * 100}%)")
+        for lhs, rhs, conf, supp in association_rules:
+            print(f"{lhs} => [{rhs}] (Conf: {conf * 100:.4f}%, Supp: {supp * 100:.4f}%)")
 
-    """
-    For comparison:
+        sys.stdout = original_stdout
 
-    import mlxtend.frequent_patterns # https://github.com/rasbt/mlxtend/blob/master/mlxtend/frequent_patterns/apriori.py
+    print("Output has been saved to output.txt.")    
 
-    encoded_df = pd.read_csv("encoded_data.csv")
-    frequent_itemsets = mlxtend.frequent_patterns.apriori(encoded_df, min_sup, use_colnames=True) 
-    print(frequent_itemsets["itemsets"])
-
-    association_rules = mlxtend.frequent_patterns.association_rules(frequent_itemsets, metric="confidence", min_threshold=min_conf)
-    print(association_rules)
-
-    """
-    
 
 if __name__ == "__main__":
     main()
