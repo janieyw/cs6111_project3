@@ -3,7 +3,6 @@ import sys
 import pickle
 import pandas as pd
 import numpy as np
-import mlxtend.frequent_patterns # https://github.com/rasbt/mlxtend/blob/master/mlxtend/frequent_patterns/apriori.py
 
 
 INTERESTED_CATEGORICAL_COLS = ['BORO_NM', 'LAW_CAT_CD', 'OFNS_DESC', 'PATROL_BORO', 'PREM_TYP_DESC', 'SUSP_AGE_GROUP', 'SUSP_RACE', 'SUSP_SEX', 'VIC_AGE_GROUP', 'VIC_RACE', 'VIC_SEX']
@@ -113,11 +112,10 @@ def main():
         return
     file_name, min_sup, min_conf = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
 
-    if min_sup <= 0.0:
-        raise ValueError(
-            "`min_support` must be a positive number in the range of `(0, 1]`. "
-        )
-    # encoded_df = pd.read_csv("encoded_data.csv")
+    if min_sup <= 0 or min_sup > 1:
+        raise ValueError("`min_support` must be a positive number in the range of (0, 1].")
+    if min_conf <= 0 or min_conf > 1:
+        raise ValueError("`min_confidence` must be a positive number in the range of (0, 1].")
 
     baskets = load_baskets() # save and load for convenience
     if baskets is None:
@@ -125,17 +123,31 @@ def main():
         baskets = generate_baskets(df, INTERESTED_CATEGORICAL_COLS)
         save_baskets(baskets)
     frequent_itemsets = apriori(baskets, min_sup)
-    # frequent_itemsets = mlxtend.frequent_patterns.apriori(encoded_df, min_sup, use_colnames=True)['itemsets'] # for comparison
-
-    print("Frequent Itemsets:")
-    for itemset in frequent_itemsets:
-        print(itemset)
-
+    
+    print(f"==Frequent itemsets (min_sup={min_sup * 100}%)")
+    for itemset, support in frequent_itemsets:
+        print(f"{list(itemset)}, {support * 100:.4f}%")
+    
     association_rules = get_association_rules(frequent_itemsets, min_conf)
-    print("Association rules:")
-    for r in association_rules:
-        print(r)
+    print(f"==High-confidence association rules (min_conf={min_conf * 100}%)")
+    for lhs, rhs, conf, supp in association_rules:
+        print(f"{lhs} => [{rhs}] (Conf: {conf * 100:.4f}%, Supp: {supp * 100:.4f}%)")
 
+
+    """
+    For comparison:
+
+    import mlxtend.frequent_patterns # https://github.com/rasbt/mlxtend/blob/master/mlxtend/frequent_patterns/apriori.py
+
+    encoded_df = pd.read_csv("encoded_data.csv")
+    frequent_itemsets = mlxtend.frequent_patterns.apriori(encoded_df, min_sup, use_colnames=True) 
+    print(frequent_itemsets["itemsets"])
+
+    association_rules = mlxtend.frequent_patterns.association_rules(frequent_itemsets, metric="confidence", min_threshold=min_conf)
+    print(association_rules)
+
+    """
+    
 
 if __name__ == "__main__":
     main()
