@@ -59,45 +59,49 @@ def apriori(baskets, min_sup):
 
     # Generate L1 from single item counts
     L1 = [(frozenset([item]), count / total_baskets) for item, count in item_counts.items() if count / total_baskets >= min_sup]
-    L = [[], L1]
-    k = 2
+    L = [[], L1] # Initialize L to store all levels of frequent itemsets; start with L1
+    k = 2 # Start looking for pairs of items
 
-    while L[-1]:
-        Ck = apriori_gen([x[0] for x in L[k-1]], k)
-        item_counts = {itemset: 0 for itemset in Ck}
+    while L[-1]: # Continue until no more frequent itemsets are found
+        Ck = apriori_gen([x[0] for x in L[k-1]], k) # Generate candidate itemsets from the last level of frequent itemsets
+        item_counts = {itemset: 0 for itemset in Ck} # Initialize counts for candidate itemsets
         for basket in baskets:
             for itemset in Ck:
-                if itemset.issubset(basket):
+                if itemset.issubset(basket): # Check if the candidate itemset is in the basket
                     item_counts[itemset] += 1
         
+        # Filter candidates to find frequent itemsets at level k
         Lk = [(itemset, count / total_baskets) for itemset, count in item_counts.items() if count / total_baskets >= min_sup]
-        L.append(Lk)
-        k += 1
+        L.append(Lk) # Add new level to L
+        k += 1 # Increment to search for larger sets
     return sorted(sum(L, []), key=lambda x: x[1], reverse=True)
 
 def get_all_subsets(items):
+    """Generates all possible subsets of a given itemset, excluding the empty set."""
     items = list(items)
     current = set()
     subsets = []
     def _recur(i, current):
+        """Recursive helper function to generate subsets."""
         if i == len(items):
             if current:
                 subsets.append(list(current))
             return
-        _recur(i+1, current)
+        _recur(i+1, current) # Explore the subset without the current item
         current.add(items[i])
-        _recur(i+1, current)
+        _recur(i+1, current) # Explore the subset with the current item
         current.remove(items[i])
     _recur(0, current)
     return subsets
 
 def get_association_rules(frequent_itemsets, min_conf):
+    """Generate all high-confidence association rules from the frequent itemsets."""
     # output format: [(lhs, rhs, conf, support)]
     sup_map = {frozenset(x[0]): x[1] for x in frequent_itemsets}
     rules = []
-    checked_rels = set() # set((lhs, rhs))
+    checked_rels = set() # set((lhs, rhs)) # Set to track already evaluated rule combinations
     for itemset, sup in frequent_itemsets:
-        if len(itemset) < 2:
+        if len(itemset) < 2: # Only consider itemsets with at least two items
             continue
         for rhs in itemset:
             for lhs in get_all_subsets(itemset - set([rhs])):
@@ -105,9 +109,9 @@ def get_association_rules(frequent_itemsets, min_conf):
                     continue
                 conf = sup_map[frozenset([rhs] + lhs)] / sup_map[frozenset(lhs)]
                 if conf >= min_conf:
-                    rules.append((lhs, rhs, conf, sup_map[frozenset([rhs] + lhs)]))
+                    rules.append((lhs, rhs, conf, sup_map[frozenset([rhs] + lhs)])) # Add rule if it meets the confidence threshold
                 checked_rels.add((frozenset(lhs), rhs))
-    return sorted(rules, key=lambda x: x[2], reverse=True)
+    return sorted(rules, key=lambda x: x[2], reverse=True) # Return rules sorted by confidence
 
 def main():
     if len(sys.argv) != 4:
