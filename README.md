@@ -6,10 +6,10 @@ YeongWoo Kim (yk2920)
 
 ## File List
 
-- README.md
-- INTEGRATED-DATASET.csv
-- code: main.py
-- example-run.txt
+- `README.md`
+- `INTEGRATED-DATASET.csv`
+- code: `main.py`
+- `example-run.txt`
     
 ## Run the program
 
@@ -59,3 +59,26 @@ We chose the "NYPD Complaint Data Current (Year To Date)" dataset for two main r
     * `main`: The main function handles command-line arguments for dynamic input of the dataset filename, minimum support, and minimum confidence. It loads or generates baskets, performs Apriori algorithm to find frequent itemsets, and then generates association rules based on these itemsets. Finally, it exports results (frequent itemsets and association rules) into a file named "output.txt".
 
 ### Command line specification of a compelling sample run
+In `example-run.txt`, we use min_sup (0.01), min_conf (0.5), the command is 
+```
+python3 main.py "INTEGRATED-DATASET.csv" 0.01 0.5
+```
+We can find many intersting results from it, including:
+* ['SUSP_RACE / BLACK'] => [SUSP_SEX / M] (Conf: 74.9500%, Supp: 22.7151%)<br>
+This rule indicates a strong correlation between suspects identified as Black and being male.
+* ['VIC_SEX / D'] => [LAW_CAT_CD / MISDEMEANOR] (Conf: 71.0719%, Supp: 11.3356%)
+Victims identified with a diverse or undisclosed sex are predominantly involved in incidents classified as misdemeanors. This could highlight particular vulnerabilities or issues with how incidents involving non-binary or undisclosed gender individuals are handled or recorded.
+* ['VIC_RACE / BLACK'] => [VIC_SEX / F] (Conf: 59.1140%, Supp: 14.1990%)
+A significant proportion of victims who are Black are female, which may point to specific social vulnerabilities or targeted crimes. This data is crucial for developing protective services and support systems for this demographic.
+* ['VIC_AGE_GROUP / 25-44'] => [VIC_SEX / F] (Conf: 53.0214%, Supp: 18.7737%)
+The rule suggests that a substantial number of victims within the age group of 25-44 are female. This age and gender-specific insight can guide public safety measures and informative campaigns tailored to this demographic's needs.
+* ['BORO_NM / MANHATTAN'] => [LAW_CAT_CD / MISDEMEANOR] (Conf: 52.8640%, Supp: 12.5967%)
+Incidents reported in Manhattan are frequently classified as misdemeanors, potentially indicating a pattern in the types of crimes or the law enforcement response in this borough.
+* ['BORO_NM / MANHATTAN'] => [PATROL_BORO / PATROL BORO MAN SOUTH] (Conf: 52.0301%, Supp: 12.3980%)
+Over half of the incidents occurring in Manhattan fall under the South Manhattan Patrol's jurisdiction. This suggests a concentration of police reporting and possibly higher crime rates in this part of the borough.
+* ['BORO_NM / BROOKLYN'] => [PATROL_BORO / PATROL BORO BKLYN SOUTH] (Conf: 50.4964%, Supp: 14.0658%)
+Similarly, just over 50% of the incidents in Brooklyn are managed by the South Brooklyn Patrol Borough, indicating specific areas within Brooklyn that might require more focused law enforcement attention?
+* ['PATROL_BORO / PATROL BORO BRONX'] => [SUSP_SEX / M] (Conf: 50.4027%, Supp: 10.9004%)
+This suggests a high likelihood that suspects in the Bronx are male, which could be important for community policing strategies and crime prevention initiatives.
+* ['BORO_NM / BRONX'] => [SUSP_SEX / M] (Conf: 50.4006%, Supp: 10.8999%)
+This mirrors the previous rule, highlighting a consistent pattern across different patrol boroughs with a notable proportion of male suspects.
