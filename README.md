@@ -44,7 +44,7 @@ Finally, we saved the cleaned data as a CSV file named `INTEGRATED-DATASET.csv`.
 ### Justification of our choice of NYC Open Data dataset
 We chose the "NYPD Complaint Data Current (Year To Date)" dataset for two main reasons: real-life relevance and interest in public safety. Firstly, as a NYC resident and a frequent visitor ourselves, we find this dataset valuable because it contains up-to-date information on incidents reported throughout New York City. This makes it an essential resource for understanding the current context and dynamics of the city. Secondly, public safety is a significant concern in any urban setting, and this dataset provides deep insights into crime trends and specific locations. By analyzing this data, we hope to uncover interesting insights that could potentially lead to informed discussions aimed at enhancing safety across the city.
 
-### Description of the internal design
+## Description of the internal design
 * Data Preparation and Basket Creation:
     * `generate_baskets`: This function transforms the raw data into "baskets", each of which is a set of items, where each item represents a feature-value pair (e.g., 'BORO_NM / Manhattan').
 * Basket Storage:
@@ -58,7 +58,7 @@ We chose the "NYPD Complaint Data Current (Year To Date)" dataset for two main r
 * Main:
     * `main`: The main function handles command-line arguments for dynamic input of the dataset filename, minimum support, and minimum confidence. It loads or generates baskets, performs Apriori algorithm to find frequent itemsets, and then generates association rules based on these itemsets. Finally, it exports results (frequent itemsets and association rules) into a file named "output.txt".
 
-### Command line specification of a compelling sample run
+## Command line specification of a compelling sample run
 In `example-run.txt`, we use min_sup (0.01), min_conf (0.5), the command is 
 ```
 python3 main.py "INTEGRATED-DATASET.csv" 0.01 0.5
